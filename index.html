@@ -331,9 +331,9 @@ function startSearch() {
     function() {
       userLat = 37.5013; userLng = 127.1000;
       document.getElementById('locDot').className = 'status-dot active';
-      document.getElementById('locText').textContent = '시연 모드 — 서울시 송파구';
+      document.getElementById('locText').textContent = '주소 변환 중...';
+      fetchAddress(userLat, userLng);
       fetchAndCalc();
-    },
     { timeout: 8000 }
   );
 }
