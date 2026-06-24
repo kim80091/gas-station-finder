@@ -54,7 +54,7 @@
   .status-dot.active{background:var(--green);animation:pulse 1.5s infinite;}
   @keyframes pulse{0%,100%{opacity:1;}50%{opacity:0.4;}}
   .fill-banner{background:linear-gradient(135deg,#FEF3C7,#FDE68A);border-radius:var(--radius-sm);padding:12px 14px;margin-bottom:12px;display:flex;gap:10px;align-items:flex-start;}
-  .fill-banner .icon{font-size:20px;flex-shrink:0;}
+  .fill-banner-icon{font-size:20px;flex-shrink:0;}
   .fill-banner-title{font-size:14px;font-weight:600;color:#92400E;}
   .fill-banner-sub{font-size:12px;color:#B45309;margin-top:2px;line-height:1.4;}
   .divider{height:1px;background:var(--border);margin:14px 0;}
@@ -67,7 +67,7 @@
   .station-card{background:var(--surface);border-radius:var(--radius);border:1.5px solid var(--border);padding:16px;margin-bottom:10px;position:relative;overflow:hidden;}
   .station-card.rank-1{border-color:var(--green);}
   .station-card.rank-2{border-color:#D1FAE5;}
-  .rank-badge{position:absolute;top:0;right:0;background:var(--green);color:white;font-size:11px;font-weight:700;padding:4px 10px;border-radius:0 var(--radius) 0 var(--radius-sm);letter-spacing:0.3px;}
+  .rank-badge{position:absolute;top:0;right:0;background:var(--green);color:white;font-size:11px;font-weight:700;padding:4px 10px;border-radius:0 var(--radius) 0 var(--radius-sm);}
   .rank-badge.r2{background:#6EE7B7;color:#065F46;}
   .rank-badge.r3{background:var(--surface2);color:var(--text-secondary);}
   .station-top{display:flex;align-items:flex-start;gap:12px;margin-bottom:12px;}
@@ -104,6 +104,7 @@
 </style>
 </head>
 <body>
+
 <div class="header">
   <div class="header-icon">⛽</div>
   <div>
@@ -111,6 +112,7 @@
     <p>아반떼 HD 2009 · 실도로 거리 · 오피넷 실시간 가격</p>
   </div>
 </div>
+
 <div class="main">
   <div class="car-banner">
     <div class="car-emoji">🚗</div>
@@ -132,8 +134,7 @@
         <span class="range-label">현재 주행 가능 거리</span>
         <div><span class="range-value" id="remainVal">120</span><span class="range-sub"> km 남음</span></div>
       </div>
-      <input type="range" id="remainRange" min="0" max="525" step="5" value="120"
-             oninput="onSliderChange(this.value)">
+      <input type="range" id="remainRange" min="0" max="525" step="5" value="120" oninput="onSliderChange(this.value)">
       <div class="fuel-gauge"><div class="fuel-fill" id="fuelFill"></div></div>
       <div style="display:flex;justify-content:space-between;margin-top:4px;">
         <span style="font-size:11px;color:var(--text-muted)">0 km</span>
@@ -142,7 +143,7 @@
     </div>
     <div class="divider"></div>
     <div id="fillBanner" class="fill-banner">
-      <span class="icon">🪣</span>
+      <span class="fill-banner-icon">🪣</span>
       <div>
         <div class="fill-banner-title">주유 필요량: <span id="needLiters">40.5</span> L</div>
         <div class="fill-banner-sub" id="fillSub"></div>
@@ -193,34 +194,27 @@
 </div>
 
 <script>
-const CAR = { maxKm:525, kmPerLiter:10 };
-const WORKER_URL = 'https://fuel-proxy.kim80091.workers.dev';
+var CAR = { maxKm: 525, kmPerLiter: 10 };
+var WORKER_URL = 'https://fuel-proxy.kim80091.workers.dev';
+var userLat = null, userLng = null;
+var remainKm = 120;
+var selectedFuel = 'B027';
 
-// ── 상태 변수 ─────────────────────────────────────────────
-let userLat = null, userLng = null;
-let remainKm = 120;
-let selectedFuel = 'B027';
-
-// ── localStorage 저장/불러오기 ────────────────────────────
+/* ── localStorage ── */
 function saveSettings() {
-  try {
-    localStorage.setItem('gs_remainKm', remainKm);
-    localStorage.setItem('gs_fuel', selectedFuel);
-  } catch(e) {}
+  try { localStorage.setItem('gs_km', String(remainKm)); localStorage.setItem('gs_fuel', selectedFuel); } catch(e) {}
 }
-
 function loadSettings() {
   try {
-    var km = localStorage.getItem('gs_remainKm');
+    var km = localStorage.getItem('gs_km');
     var fuel = localStorage.getItem('gs_fuel');
-    if (km !== null) remainKm = parseInt(km);
+    if (km !== null && !isNaN(parseInt(km))) remainKm = parseInt(km);
     if (fuel) selectedFuel = fuel;
   } catch(e) {}
 }
 
-// ── UI 반영 ───────────────────────────────────────────────
+/* ── UI 동기화 ── */
 function applyUI() {
-  // 슬라이더
   document.getElementById('remainRange').value = remainKm;
   document.getElementById('remainVal').textContent = remainKm;
   document.getElementById('fuelFill').style.width = (remainKm / CAR.maxKm * 100) + '%';
@@ -228,87 +222,69 @@ function applyUI() {
   document.getElementById('needLiters').textContent = needL;
   document.getElementById('fillSub').textContent = '525km − ' + remainKm + 'km = ' + (CAR.maxKm - remainKm) + 'km 분 · ' + needL + 'L 주유 시 가득 채움';
   document.getElementById('fillBanner').style.display = remainKm >= CAR.maxKm ? 'none' : 'flex';
-  // 유종 탭
-  ['B027','D047','K015'].forEach(function(code) {
-    var tab = document.getElementById('tab-' + code);
-    if (tab) tab.className = 'fuel-tab' + (code === selectedFuel ? ' active' : '');
-  });
+  var codes = ['B027', 'D047', 'K015'];
+  for (var i = 0; i < codes.length; i++) {
+    var tab = document.getElementById('tab-' + codes[i]);
+    if (tab) tab.className = 'fuel-tab' + (codes[i] === selectedFuel ? ' active' : '');
+  }
 }
 
-// ── 이벤트 핸들러 ─────────────────────────────────────────
+/* ── 이벤트 ── */
 function onSliderChange(val) {
   remainKm = parseInt(val);
   applyUI();
   saveSettings();
 }
-
 function onFuelChange(code) {
   selectedFuel = code;
   applyUI();
   saveSettings();
 }
 
-// ── 거리 계산 ─────────────────────────────────────────────
-function haversineKm(lat1,lng1,lat2,lng2) {
-  var R=6371, D2R=Math.PI/180;
-  var dLat=(lat2-lat1)*D2R, dLng=(lng2-lng1)*D2R;
-  var a=Math.sin(dLat/2)*Math.sin(dLat/2)+Math.cos(lat1*D2R)*Math.cos(lat2*D2R)*Math.sin(dLng/2)*Math.sin(dLng/2);
-  return R*2*Math.atan2(Math.sqrt(a),Math.sqrt(1-a));
+/* ── 거리 계산 ── */
+function haversineKm(lat1, lng1, lat2, lng2) {
+  var R = 6371, D2R = Math.PI / 180;
+  var dLat = (lat2 - lat1) * D2R, dLng = (lng2 - lng1) * D2R;
+  var a = Math.sin(dLat/2)*Math.sin(dLat/2) + Math.cos(lat1*D2R)*Math.cos(lat2*D2R)*Math.sin(dLng/2)*Math.sin(dLng/2);
+  return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
 }
-
-async function getRoadDistance(fromLat,fromLng,toLat,toLng) {
+async function getRoadDistance(fromLat, fromLng, toLat, toLng) {
   try {
-    var res = await fetch(WORKER_URL+'/directions?oy='+fromLat+'&ox='+fromLng+'&dy='+toLat+'&dx='+toLng);
-    var data = await res.json();
-    if (data.distanceKm) return { distanceKm:parseFloat(data.distanceKm), durationMin:data.durationMin, isFallback:false };
+    var res = await fetch(WORKER_URL + '/directions?oy=' + fromLat + '&ox=' + fromLng + '&dy=' + toLat + '&dx=' + toLng);
+    var d = await res.json();
+    if (d.distanceKm) return { distanceKm: parseFloat(d.distanceKm), durationMin: d.durationMin, isFallback: false };
   } catch(e) {}
-  var s = haversineKm(fromLat,fromLng,toLat,toLng);
-  return { distanceKm:parseFloat((s*1.3).toFixed(2)), durationMin:null, isFallback:true };
+  var s = haversineKm(fromLat, fromLng, toLat, toLng);
+  return { distanceKm: parseFloat((s * 1.3).toFixed(2)), durationMin: null, isFallback: true };
 }
 
-// ── 가성비 계산 ───────────────────────────────────────────
+/* ── 가성비 계산 ── */
 function calcCost(s) {
   var needL = (CAR.maxKm - remainKm) / CAR.kmPerLiter;
   var roadKm = s.roadKm || (s.distM / 1000 * 1.3);
   var rtKm = roadKm * 2;
-  var rtL = rtKm / CAR.kmPerLiter;
   var fuelCost = Math.round(needL * s.price);
-  var travelCost = Math.round(rtL * s.price);
-  return {
-    needL: needL.toFixed(1),
-    roundTripKm: rtKm.toFixed(1),
-    roundTripL: rtL.toFixed(2),
-    fuelCost: fuelCost,
-    travelCost: travelCost,
-    totalCost: fuelCost + travelCost
-  };
+  var travelCost = Math.round((rtKm / CAR.kmPerLiter) * s.price);
+  return { needL: needL.toFixed(1), roundTripKm: rtKm.toFixed(1), roundTripL: (rtKm/CAR.kmPerLiter).toFixed(2), fuelCost: fuelCost, travelCost: travelCost, totalCost: fuelCost + travelCost };
 }
 
-// ── 브랜드 정보 ───────────────────────────────────────────
-var BRAND = {
-  SKE:{label:'SK에너지',emoji:'🔴',bg:'#FEF2F2'},
-  GSC:{label:'GS칼텍스',emoji:'🟢',bg:'#F0FDF4'},
-  HDO:{label:'현대오일뱅크',emoji:'🔵',bg:'#EFF6FF'},
-  SOL:{label:'S-OIL',emoji:'🟡',bg:'#FFFBEB'},
-  RTE:{label:'에쓰오일',emoji:'🟡',bg:'#FFFBEB'},
-  RTX:{label:'알뜰',emoji:'💜',bg:'#F5F3FF'},
-  NHO:{label:'농협알뜰',emoji:'💚',bg:'#F0FDF4'},
-  ETC:{label:'자영',emoji:'⚪',bg:'#F9FAFB'}
-};
-function brandInfo(code) { return BRAND[code] || {label:code,emoji:'⛽',bg:'#F7F8FA'}; }
+/* ── 브랜드 ── */
+var BRAND = { SKE:{label:'SK에너지',emoji:'🔴',bg:'#FEF2F2'}, GSC:{label:'GS칼텍스',emoji:'🟢',bg:'#F0FDF4'}, HDO:{label:'현대오일뱅크',emoji:'🔵',bg:'#EFF6FF'}, SOL:{label:'S-OIL',emoji:'🟡',bg:'#FFFBEB'}, RTE:{label:'에쓰오일',emoji:'🟡',bg:'#FFFBEB'}, RTX:{label:'알뜰',emoji:'💜',bg:'#F5F3FF'}, NHO:{label:'농협알뜰',emoji:'💚',bg:'#F0FDF4'}, ETC:{label:'자영',emoji:'⚪',bg:'#F9FAFB'} };
+function brandInfo(code) { return BRAND[code] || { label: code, emoji: '⛽', bg: '#F7F8FA' }; }
 
-// ── 역지오코딩 ────────────────────────────────────────────
+/* ── 역지오코딩 ── */
 async function fetchAddress(lat, lng) {
+  var el = document.getElementById('locText');
   try {
     var res = await fetch(WORKER_URL + '/geocode?lat=' + lat + '&lng=' + lng);
-    var data = await res.json();
-    document.getElementById('locText').textContent = data.address ? '📍 ' + data.address : '📍 ' + lat.toFixed(4) + ', ' + lng.toFixed(4);
+    var d = await res.json();
+    el.textContent = d.address ? '📍 ' + d.address : '📍 ' + lat.toFixed(4) + ', ' + lng.toFixed(4);
   } catch(e) {
-    document.getElementById('locText').textContent = '📍 ' + lat.toFixed(4) + ', ' + lng.toFixed(4);
+    el.textContent = '📍 ' + lat.toFixed(4) + ', ' + lng.toFixed(4);
   }
 }
 
-// ── 검색 시작 ─────────────────────────────────────────────
+/* ── 위치 검색 시작 ── */
 function startSearch() {
   var btn = document.getElementById('searchBtn');
   btn.disabled = true;
@@ -329,77 +305,66 @@ function startSearch() {
       fetchAndCalc();
     },
     function() {
-      userLat = 37.5013; userLng = 127.1000;
+      userLat = 37.5013;
+      userLng = 127.1000;
       document.getElementById('locDot').className = 'status-dot active';
       document.getElementById('locText').textContent = '주소 변환 중...';
       fetchAddress(userLat, userLng);
       fetchAndCalc();
     },
+    { timeout: 8000 }
   );
 }
 
-// ── 주유소 조회 + 도로거리 ────────────────────────────────
+/* ── 주유소 조회 ── */
 async function fetchAndCalc() {
   var radius = parseFloat(document.getElementById('radiusInput').value) || 5;
   document.getElementById('loadingText').textContent = '오피넷에서 주유소 가격 조회 중...';
-
   var stations = [];
   try {
     var res = await fetch(WORKER_URL + '/stations?lat=' + userLat + '&lng=' + userLng + '&radius=' + radius + '&prodcd=' + selectedFuel);
-    var data = await res.json();
-    if (data.stations && data.stations.length > 0) {
-      stations = data.stations;
+    var d = await res.json();
+    if (d.stations && d.stations.length > 0) {
+      stations = d.stations;
     } else {
-      showError('반경 내 주유소를 찾을 수 없습니다. 반경을 늘려보세요.');
-      return;
+      showError('반경 내 주유소를 찾을 수 없습니다. 반경을 늘려보세요.'); return;
     }
   } catch(e) {
-    showError('주유소 정보를 불러오지 못했습니다: ' + e.message);
-    return;
+    showError('주유소 정보를 불러오지 못했습니다: ' + e.message); return;
   }
 
   document.getElementById('loadingText').textContent = '도로 거리 계산 중... (' + stations.length + '개 주유소)';
   var roads = await Promise.all(stations.map(function(s) {
-    return s.lat && s.lng
-      ? getRoadDistance(userLat, userLng, s.lat, s.lng)
-      : Promise.resolve({ distanceKm: (s.distM/1000*1.3).toFixed(2), durationMin:null, isFallback:true });
+    return (s.lat && s.lng) ? getRoadDistance(userLat, userLng, s.lat, s.lng) : Promise.resolve({ distanceKm: (s.distM/1000*1.3).toFixed(2), durationMin: null, isFallback: true });
   }));
-
   stations = stations.map(function(s, i) {
     return Object.assign({}, s, { roadKm: parseFloat(roads[i].distanceKm), durationMin: roads[i].durationMin, isFallback: roads[i].isFallback });
   });
-
-  stations.sort(function(a,b) { return calcCost(a).totalCost - calcCost(b).totalCost; });
+  stations.sort(function(a, b) { return calcCost(a).totalCost - calcCost(b).totalCost; });
   stations = stations.slice(0, 10);
   renderResults(stations);
 }
 
-// ── 주소 복사 ─────────────────────────────────────────────
+/* ── 주소 복사 ── */
 function copyAddress(addr, btnEl) {
   navigator.clipboard.writeText(addr).then(function() {
-    btnEl.classList.add('copied');
-    btnEl.textContent = '✅ 복사됨!';
+    btnEl.classList.add('copied'); btnEl.textContent = '✅ 복사됨!';
     setTimeout(function() { btnEl.classList.remove('copied'); btnEl.textContent = '📋 주소 복사'; }, 2000);
   }).catch(function() {
-    var ta = document.createElement('textarea');
-    ta.value = addr; document.body.appendChild(ta); ta.select();
-    document.execCommand('copy'); document.body.removeChild(ta);
-    btnEl.classList.add('copied');
-    btnEl.textContent = '✅ 복사됨!';
+    var ta = document.createElement('textarea'); ta.value = addr; document.body.appendChild(ta); ta.select(); document.execCommand('copy'); document.body.removeChild(ta);
+    btnEl.classList.add('copied'); btnEl.textContent = '✅ 복사됨!';
     setTimeout(function() { btnEl.classList.remove('copied'); btnEl.textContent = '📋 주소 복사'; }, 2000);
   });
 }
 
-// ── 결과 렌더링 ───────────────────────────────────────────
+/* ── 결과 렌더링 ── */
 function renderResults(stations) {
   document.getElementById('loadingSection').classList.add('hidden');
   document.getElementById('searchBtn').disabled = false;
   document.getElementById('searchBtn').innerHTML = '<span>🔄</span> 다시 검색';
   document.getElementById('resultsCount').textContent = stations.length + '개 발견';
   document.getElementById('resultsSection').classList.remove('hidden');
-
   var bestCost = calcCost(stations[0]).totalCost;
-
   document.getElementById('stationList').innerHTML = stations.map(function(s, idx) {
     var c = calcCost(s);
     var diff = c.totalCost - bestCost;
@@ -407,12 +372,10 @@ function renderResults(stations) {
     var badgeClass = idx === 0 ? '' : idx === 1 ? 'r2' : 'r3';
     var rankText = idx === 0 ? '🏆 최고가성비' : (idx+1) + '위';
     var b = brandInfo(s.brand);
-    var roadTag = s.isFallback
-      ? '<span class="road-tag fallback">추정 ' + s.roadKm + 'km</span>'
-      : '<span class="road-tag">🚗 ' + s.roadKm + 'km · ' + s.durationMin + '분</span>';
+    var roadTag = s.isFallback ? '<span class="road-tag fallback">추정 ' + s.roadKm + 'km</span>' : '<span class="road-tag">🚗 ' + s.roadKm + 'km · ' + s.durationMin + '분</span>';
     var addrText = s.address || s.name;
-    var naverQuery = encodeURIComponent(addrText);
-
+    var addrEsc = addrText.replace(/\\/g, '\\\\').replace(/'/g, "\\'");
+    var naverUrl = 'https://map.naver.com/v5/search/' + encodeURIComponent(addrText);
     return '<div class="station-card ' + rankClass + '">'
       + '<div class="rank-badge ' + badgeClass + '">' + rankText + '</div>'
       + '<div class="station-top">'
@@ -433,21 +396,19 @@ function renderResults(stations) {
       + '<div class="total-cost">'
         + '<div>'
           + '<div class="total-cost-lbl">주유비 ' + c.fuelCost.toLocaleString() + '원 + 이동비 ' + c.travelCost.toLocaleString() + '원</div>'
-          + (idx > 0
-            ? '<div style="font-size:12px;color:var(--red);margin-top:2px;">최저 대비 +' + diff.toLocaleString() + '원</div>'
-            : '<div class="saving-tag">✅ 가장 유리한 선택</div>')
+          + (idx > 0 ? '<div style="font-size:12px;color:var(--red);margin-top:2px;">최저 대비 +' + diff.toLocaleString() + '원</div>' : '<div class="saving-tag">✅ 가장 유리한 선택</div>')
         + '</div>'
         + '<div class="total-cost-val ' + (idx === 0 ? 'best' : '') + '">' + c.totalCost.toLocaleString() + '원</div>'
       + '</div>'
       + '<div class="btn-row">'
-        + '<button class="addr-copy-btn" onclick="copyAddress(\'' + addrText.replace(/'/g,"\\'") + '\',this)">📋 주소 복사</button>'
-        + '<a class="naver-map-btn" href="https://map.naver.com/v5/search/' + naverQuery + '" target="_blank" rel="noopener">🗺️ 네이버지도</a>'
+        + '<button class="addr-copy-btn" onclick="copyAddress(\'' + addrEsc + '\', this)">📋 주소 복사</button>'
+        + '<a class="naver-map-btn" href="' + naverUrl + '" target="_blank" rel="noopener">🗺️ 네이버지도</a>'
       + '</div>'
     + '</div>';
   }).join('');
 }
 
-// ── 에러 표시 ─────────────────────────────────────────────
+/* ── 에러 ── */
 function showError(msg) {
   document.getElementById('loadingSection').classList.add('hidden');
   document.getElementById('errorSection').classList.remove('hidden');
@@ -456,7 +417,7 @@ function showError(msg) {
   document.getElementById('searchBtn').innerHTML = '<span>📍</span> 다시 시도';
 }
 
-// ── 초기화 ────────────────────────────────────────────────
+/* ── 초기화 ── */
 loadSettings();
 applyUI();
 </script>
