@@ -129,7 +129,7 @@
         <span class="range-label">현재 주행 가능 거리</span>
         <div><span class="range-value" id="remainVal">120</span><span class="range-sub"> km 남음</span></div>
       </div>
-      <input type="range" id="remainRange" min="0" max="525" step="5" value="120" oninput="updateRemain(this.value)">
+      <input type="range" id="remainRange" min="0" max="525" step="5" value="120" oninput="updateRemain(this.value);saveSettings()">
       <div class="fuel-gauge"><div class="fuel-fill" id="fuelFill" style="width:22.9%"></div></div>
       <div style="display:flex;justify-content:space-between;margin-top:4px;">
         <span style="font-size:11px;color:var(--text-muted)">0 km</span>
@@ -197,6 +197,33 @@ function setFuel(code,el){
   selectedFuel=code;
   document.querySelectorAll('.fuel-tab').forEach(function(t){t.classList.remove('active');});
   el.classList.add('active');
+  saveSettings();
+}
+
+function saveSettings(){
+  try{
+    localStorage.setItem('gs_remainKm', remainKm);
+    localStorage.setItem('gs_fuel', selectedFuel);
+  }catch(e){}
+}
+
+function loadSettings(){
+  try{
+    var savedKm=localStorage.getItem('gs_remainKm');
+    var savedFuel=localStorage.getItem('gs_fuel');
+    if(savedKm!==null){
+      remainKm=parseInt(savedKm);
+      document.getElementById('remainRange').value=remainKm;
+    }
+    if(savedFuel){
+      selectedFuel=savedFuel;
+      var fuelMap={'B027':0,'D047':1,'K015':2};
+      var tabs=document.querySelectorAll('.fuel-tab');
+      var idx=fuelMap[savedFuel]||0;
+      tabs.forEach(function(t){t.classList.remove('active');});
+      tabs[idx].classList.add('active');
+    }
+  }catch(e){}
 }
 
 function updateRemain(val){
@@ -375,7 +402,8 @@ function showError(msg){
   document.getElementById('searchBtn').innerHTML='<span>📍</span> 다시 시도';
 }
 
-updateRemain(120);
+loadSettings();
+updateRemain(remainKm);
 </script>
 </body>
 </html>
