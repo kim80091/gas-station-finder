@@ -121,8 +121,8 @@
       <p>가솔린 · 1.6L · 자동변속기</p>
       <div class="car-stats">
         <div><div class="car-stat-val">10 km/L</div><div class="car-stat-lbl">평균 연비</div></div>
-        <div><div class="car-stat-val">52.5 L</div><div class="car-stat-lbl">연료 탱크</div></div>
-        <div><div class="car-stat-val">525 km</div><div class="car-stat-lbl">최대 주행거리</div></div>
+        <div><div class="car-stat-val">53 L</div><div class="car-stat-lbl">연료 탱크</div></div>
+        <div><div class="car-stat-val">530 km</div><div class="car-stat-lbl">최대 주행거리</div></div>
       </div>
     </div>
   </div>
@@ -134,11 +134,11 @@
         <span class="range-label">현재 주행 가능 거리</span>
         <div><span class="range-value" id="remainVal">120</span><span class="range-sub"> km 남음</span></div>
       </div>
-      <input type="range" id="remainRange" min="0" max="525" step="5" value="120" oninput="onSliderChange(this.value)">
+      <input type="range" id="remainRange" min="0" max="530" step="5" value="120" oninput="onSliderChange(this.value)">
       <div class="fuel-gauge"><div class="fuel-fill" id="fuelFill"></div></div>
       <div style="display:flex;justify-content:space-between;margin-top:4px;">
         <span style="font-size:11px;color:var(--text-muted)">0 km</span>
-        <span style="font-size:11px;color:var(--text-muted)">525 km (Full)</span>
+        <span style="font-size:11px;color:var(--text-muted)">530 km (Full)</span>
       </div>
     </div>
     <div class="divider"></div>
@@ -194,7 +194,7 @@
 </div>
 
 <script>
-var CAR = { maxKm: 525, kmPerLiter: 10 };
+var CAR = { maxKm: 530, kmPerLiter: 10 };
 var WORKER_URL = 'https://fuel-proxy.kim80091.workers.dev';
 var userLat = null, userLng = null;
 var remainKm = 120;
@@ -220,7 +220,7 @@ function applyUI() {
   document.getElementById('fuelFill').style.width = (remainKm / CAR.maxKm * 100) + '%';
   var needL = ((CAR.maxKm - remainKm) / CAR.kmPerLiter).toFixed(1);
   document.getElementById('needLiters').textContent = needL;
-  document.getElementById('fillSub').textContent = '525km − ' + remainKm + 'km = ' + (CAR.maxKm - remainKm) + 'km 분 · ' + needL + 'L 주유 시 가득 채움';
+  document.getElementById('fillSub').textContent = '530km − ' + remainKm + 'km = ' + (CAR.maxKm - remainKm) + 'km 분 · ' + needL + 'L 주유 시 가득 채움';
   document.getElementById('fillBanner').style.display = remainKm >= CAR.maxKm ? 'none' : 'flex';
   var codes = ['B027', 'D047', 'K015'];
   for (var i = 0; i < codes.length; i++) {
