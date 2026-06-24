@@ -334,7 +334,7 @@ function startSearch() {
       document.getElementById('locText').textContent = '주소 변환 중...';
       fetchAddress(userLat, userLng);
       fetchAndCalc();
-    { timeout: 8000 }
+    },
   );
 }
 
