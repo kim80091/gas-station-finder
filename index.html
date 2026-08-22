@@ -135,6 +135,7 @@
   .filter-info{background:#FEF3C7;border-radius:var(--radius-sm);padding:9px 12px;font-size:12px;color:#92400E;margin-bottom:10px;line-height:1.5;}
   .map-wrap{border-radius:var(--radius);overflow:hidden;border:1px solid var(--border);box-shadow:var(--shadow-sm);margin-bottom:12px;position:relative;}
   #kakaoMap{width:100%;height:380px;}
+  #kakaoParkingMap{width:100%;height:380px;}
   .map-loading{position:absolute;inset:0;background:rgba(255,255,255,0.9);display:flex;align-items:center;justify-content:center;flex-direction:column;gap:8px;font-size:13px;color:var(--text-muted);z-index:10;}
   .list-header{display:flex;align-items:baseline;justify-content:space-between;margin-bottom:10px;}
   .list-title{font-size:15px;font-weight:700;}
@@ -153,6 +154,50 @@
   .s-price-val{font-size:16px;font-weight:700;color:var(--accent);}
   .s-price-lbl{font-size:10px;color:var(--text-muted);margin-top:1px;}
   .empty-box{background:var(--surface);border-radius:var(--radius);border:1px solid var(--border);padding:32px;text-align:center;color:var(--text-muted);font-size:13px;line-height:1.6;}
+
+  /* 주차장 탭 전용 스타일 */
+  .toggle-group{display:flex;gap:8px;margin-bottom:12px;}
+  .toggle-chip{flex:1;padding:10px;border-radius:var(--radius-sm);border:1.5px solid var(--border);background:var(--surface2);font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;color:var(--text-secondary);transition:all 0.15s;text-align:center;display:flex;align-items:center;justify-content:center;gap:6px;}
+  .toggle-chip.on{border-color:var(--accent);background:var(--accent-light);color:var(--accent);}
+  .toggle-chip .dot-ind{width:8px;height:8px;border-radius:50%;background:var(--border);}
+  .toggle-chip.on .dot-ind{background:var(--accent);}
+
+  .loc-mode-group{display:flex;gap:8px;margin-bottom:10px;}
+  .loc-mode-btn{flex:1;padding:9px;border-radius:var(--radius-sm);border:1.5px solid var(--border);background:var(--surface2);font-size:12px;font-weight:600;cursor:pointer;font-family:inherit;color:var(--text-secondary);transition:all 0.15s;text-align:center;}
+  .loc-mode-btn.active{border-color:var(--accent);background:var(--accent-light);color:var(--accent);}
+
+  .dest-search-box{margin-bottom:10px;}
+  .dest-search-row{display:flex;gap:6px;}
+  .dest-search-row input{flex:1;border:1.5px solid var(--border);background:var(--surface2);border-radius:var(--radius-sm);padding:10px 12px;font-size:14px;font-family:inherit;outline:none;}
+  .dest-search-row input:focus{border-color:var(--accent);}
+  .dest-search-btn{padding:0 16px;background:var(--accent);color:white;border:none;border-radius:var(--radius-sm);font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;white-space:nowrap;}
+  .dest-results{margin-top:6px;border:1px solid var(--border);border-radius:var(--radius-sm);overflow:hidden;}
+  .dest-result-item{padding:10px 12px;font-size:13px;border-bottom:1px solid var(--border);cursor:pointer;background:var(--surface);}
+  .dest-result-item:last-child{border-bottom:none;}
+  .dest-result-item:hover{background:var(--surface2);}
+  .dest-result-name{font-weight:600;color:var(--text-primary);}
+  .dest-result-addr{font-size:11px;color:var(--text-muted);margin-top:2px;}
+  .dest-selected{background:var(--green-light);border:1px solid var(--green);border-radius:var(--radius-sm);padding:9px 12px;font-size:13px;color:var(--green);margin-top:6px;display:flex;justify-content:space-between;align-items:center;}
+  .dest-selected .clear-dest{cursor:pointer;font-weight:700;color:var(--red);}
+
+  .hour-slider-box{margin-bottom:4px;}
+  .hour-header{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:8px;}
+  .hour-label{font-size:13px;font-weight:500;color:var(--text-secondary);}
+  .hour-value{font-size:20px;font-weight:700;color:var(--accent);}
+
+  .p-card{background:var(--surface);border-radius:var(--radius);border:1.5px solid var(--border);padding:14px;margin-bottom:8px;cursor:pointer;transition:border-color 0.15s;}
+  .p-card:hover{border-color:var(--accent);}
+  .p-top{display:flex;align-items:flex-start;justify-content:space-between;gap:10px;}
+  .p-name{font-size:14px;font-weight:600;}
+  .p-se-badge{display:inline-block;font-size:10px;font-weight:700;padding:2px 7px;border-radius:99px;margin-left:6px;vertical-align:middle;}
+  .p-se-badge.public{background:var(--accent-light);color:var(--accent);}
+  .p-se-badge.private{background:#FFFBEB;color:#D97706;}
+  .p-addr{font-size:11px;color:var(--text-muted);margin-top:3px;}
+  .p-dist{font-size:11px;color:var(--text-secondary);margin-top:3px;font-weight:500;}
+  .p-fee{text-align:right;flex-shrink:0;}
+  .p-fee-val{font-size:16px;font-weight:700;color:var(--accent);}
+  .p-fee-val.free{color:var(--green);}
+  .p-fee-lbl{font-size:10px;color:var(--text-muted);margin-top:1px;}
 </style>
 </head>
 <body>
@@ -168,6 +213,7 @@
   <div class="tab-bar">
     <button class="tab-btn active" id="tabBtn-calc" onclick="switchTab('calc')">💰 가성비 계산기</button>
     <button class="tab-btn" id="tabBtn-map" onclick="switchTab('map')">🗺️ 최저가 지도</button>
+    <button class="tab-btn" id="tabBtn-parking" onclick="switchTab('parking')">🅿️ 주차장 찾기</button>
   </div>
 </div>
 
@@ -318,6 +364,87 @@
 
   </div>
 
+  <!-- ══════════ 탭 3: 주차장 찾기 ══════════ -->
+  <div class="tab-panel" id="panel-parking">
+
+    <div class="card">
+      <div class="card-title">🅿️ 주차장 유형</div>
+      <div class="toggle-group">
+        <button class="toggle-chip on" id="chip-public" onclick="onToggleParkType('public')">
+          <span class="dot-ind"></span> 공영주차장
+        </button>
+        <button class="toggle-chip on" id="chip-private" onclick="onToggleParkType('private')">
+          <span class="dot-ind"></span> 민영/기타
+        </button>
+      </div>
+
+      <div class="card-title" style="margin-top:4px;">📍 위치 기준</div>
+      <div class="loc-mode-group">
+        <button class="loc-mode-btn active" id="locmode-current" onclick="onLocModeChange('current')">현재 위치</button>
+        <button class="loc-mode-btn" id="locmode-dest" onclick="onLocModeChange('dest')">목적지 검색</button>
+      </div>
+
+      <div class="dest-search-box hidden" id="destSearchBox">
+        <div class="dest-search-row">
+          <input type="text" id="destInput" placeholder="주소나 장소명 입력 (예: 강남역)" onkeypress="if(event.key==='Enter')searchDestination()">
+          <button class="dest-search-btn" onclick="searchDestination()">검색</button>
+        </div>
+        <div id="destResults"></div>
+        <div id="destSelected" class="hidden"></div>
+      </div>
+
+      <div class="input-group">
+        <label class="input-label">검색 반경</label>
+        <div class="input-row">
+          <input type="number" id="parkRadiusInput" value="1" min="0.5" max="5" step="0.5">
+          <span class="input-unit">km</span>
+        </div>
+      </div>
+
+      <div class="hour-slider-box">
+        <div class="hour-header">
+          <span class="hour-label">⏱️ 예상 이용시간</span>
+          <span><span class="hour-value" id="hourVal">2</span><span style="font-size:12px;color:var(--text-muted)"> 시간</span></span>
+        </div>
+        <input type="range" id="hourRange" min="1" max="8" step="1" value="2" oninput="onHourChange(this.value)">
+        <div style="display:flex;justify-content:space-between;margin-top:4px;">
+          <span style="font-size:11px;color:var(--text-muted)">1시간</span>
+          <span style="font-size:11px;color:var(--text-muted)">8시간</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="status-box">
+        <div class="status-dot" id="parkLocDot"></div>
+        <span id="parkLocText">버튼을 눌러 시작하세요</span>
+      </div>
+      <button class="btn btn-primary" id="parkSearchBtn" onclick="startParkingSearch()">
+        <span>📍</span> 주차장 검색
+      </button>
+    </div>
+
+    <div id="parkErrorBox" class="error-box hidden"></div>
+
+    <div class="map-wrap">
+      <div id="kakaoParkingMap"></div>
+      <div class="map-loading" id="parkMapLoading">
+        <div class="spinner"></div>
+        <span id="parkLoadingText">주차장을 검색해보세요</span>
+      </div>
+    </div>
+
+    <div class="list-header">
+      <div class="list-title">📋 주차장 목록 <span style="font-size:12px;font-weight:400;color:var(--text-muted)">(거리순)</span></div>
+      <div class="list-count" id="parkListCount"></div>
+    </div>
+    <div id="parkStationList">
+      <div class="empty-box">주차장 검색 버튼을 눌러<br>주변 주차장을 찾아보세요</div>
+    </div>
+    <p class="opinet-note">📊 전국주차장정보표준데이터(공공데이터포털) 기준 · 요금은 지자체 등록 정보 기반 추정치</p>
+
+  </div>
+
 </div>
 
 <script type="text/javascript" src="//dapi.kakao.com/v2/maps/sdk.js?appkey=b66d4664b0c4437186961aab66b99b6a&libraries=services"></script>
@@ -328,8 +455,10 @@ var WORKER_URL = 'https://fuel-proxy.kim80091.workers.dev';
 function switchTab(name){
   document.getElementById('panel-calc').classList.toggle('active', name==='calc');
   document.getElementById('panel-map').classList.toggle('active', name==='map');
+  document.getElementById('panel-parking').classList.toggle('active', name==='parking');
   document.getElementById('tabBtn-calc').classList.toggle('active', name==='calc');
   document.getElementById('tabBtn-map').classList.toggle('active', name==='map');
+  document.getElementById('tabBtn-parking').classList.toggle('active', name==='parking');
   try { localStorage.setItem('gs_activeTab', name); } catch(e) {}
   if(name==='map' && !kakaoMap){
     setTimeout(function(){
@@ -769,13 +898,302 @@ function loadMarginSetting(){
   } catch(e) {}
 }
 
+/* ══════════ 탭 3: 주차장 찾기 ══════════ */
+var PARKING_WORKER_URL = 'https://parking-proxy.kim80091.workers.dev';
+var parkTypePublic = true, parkTypePrivate = true;
+var parkLocMode = 'current'; // current | dest
+var parkHours = 2;
+var parkRadius = 1;
+var destLat = null, destLng = null, destLabel = null;
+var userLatPark = null, userLngPark = null;
+var kakaoParkingMap = null;
+var parkMarkers = [];
+var parkInfowindow = null;
+var lastParkingRaw = null;
+
+function savePark(){
+  try {
+    localStorage.setItem('gs_park_public', parkTypePublic ? '1' : '0');
+    localStorage.setItem('gs_park_private', parkTypePrivate ? '1' : '0');
+    localStorage.setItem('gs_park_locmode', parkLocMode);
+    localStorage.setItem('gs_park_hours', String(parkHours));
+    localStorage.setItem('gs_park_radius', String(parkRadius));
+  } catch(e) {}
+}
+function loadParkSettings(){
+  try {
+    var pub = localStorage.getItem('gs_park_public');
+    var priv = localStorage.getItem('gs_park_private');
+    var mode = localStorage.getItem('gs_park_locmode');
+    var hrs = localStorage.getItem('gs_park_hours');
+    var rad = localStorage.getItem('gs_park_radius');
+    if(pub !== null) parkTypePublic = pub === '1';
+    if(priv !== null) parkTypePrivate = priv === '1';
+    if(mode) parkLocMode = mode;
+    if(hrs !== null && !isNaN(parseInt(hrs))) parkHours = parseInt(hrs);
+    if(rad !== null && !isNaN(parseFloat(rad))) parkRadius = parseFloat(rad);
+  } catch(e) {}
+  document.getElementById('chip-public').classList.toggle('on', parkTypePublic);
+  document.getElementById('chip-private').classList.toggle('on', parkTypePrivate);
+  document.getElementById('locmode-current').classList.toggle('active', parkLocMode==='current');
+  document.getElementById('locmode-dest').classList.toggle('active', parkLocMode==='dest');
+  document.getElementById('destSearchBox').classList.toggle('hidden', parkLocMode!=='dest');
+  document.getElementById('hourRange').value = parkHours;
+  document.getElementById('hourVal').textContent = parkHours;
+  document.getElementById('parkRadiusInput').value = parkRadius;
+}
+
+function onToggleParkType(type){
+  if(type==='public'){ parkTypePublic = !parkTypePublic; }
+  else { parkTypePrivate = !parkTypePrivate; }
+  if(!parkTypePublic && !parkTypePrivate){ parkTypePublic = true; } // 최소 하나는 켜져있어야 함
+  document.getElementById('chip-public').classList.toggle('on', parkTypePublic);
+  document.getElementById('chip-private').classList.toggle('on', parkTypePrivate);
+  savePark();
+  if(lastParkingRaw) applyParkFilter();
+}
+
+function onLocModeChange(mode){
+  parkLocMode = mode;
+  document.getElementById('locmode-current').classList.toggle('active', mode==='current');
+  document.getElementById('locmode-dest').classList.toggle('active', mode==='dest');
+  document.getElementById('destSearchBox').classList.toggle('hidden', mode!=='dest');
+  savePark();
+}
+
+function onHourChange(val){
+  parkHours = parseInt(val);
+  document.getElementById('hourVal').textContent = parkHours;
+  savePark();
+  if(lastParkingRaw) applyParkFilter();
+}
+
+async function searchDestination(){
+  var q = document.getElementById('destInput').value.trim();
+  if(!q) return;
+  document.getElementById('destResults').innerHTML = '<div style="padding:10px;font-size:12px;color:var(--text-muted);">검색 중...</div>';
+  try {
+    var res = await fetch(PARKING_WORKER_URL + '/keyword-search?query=' + encodeURIComponent(q));
+    var data = await res.json();
+    if(!data.results || data.results.length===0){
+      document.getElementById('destResults').innerHTML = '<div style="padding:10px;font-size:12px;color:var(--text-muted);">검색 결과가 없습니다.</div>';
+      return;
+    }
+    document.getElementById('destResults').innerHTML = '<div class="dest-results">' + data.results.map(function(r,i){
+      return '<div class="dest-result-item" onclick="selectDestination('+i+')">'
+        + '<div class="dest-result-name">'+r.name+'</div>'
+        + '<div class="dest-result-addr">'+(r.address||'')+'</div>'
+        + '</div>';
+    }).join('') + '</div>';
+    window._destCandidates = data.results;
+  } catch(e) {
+    document.getElementById('destResults').innerHTML = '<div style="padding:10px;font-size:12px;color:var(--red);">검색 실패: '+e.message+'</div>';
+  }
+}
+function selectDestination(idx){
+  var r = window._destCandidates[idx];
+  destLat = r.lat; destLng = r.lng; destLabel = r.name;
+  document.getElementById('destResults').innerHTML = '';
+  document.getElementById('destInput').value = '';
+  var sel = document.getElementById('destSelected');
+  sel.classList.remove('hidden');
+  sel.innerHTML = '<span>📍 '+destLabel+'</span><span class="clear-dest" onclick="clearDestination()">✕</span>';
+}
+function clearDestination(){
+  destLat = null; destLng = null; destLabel = null;
+  document.getElementById('destSelected').classList.add('hidden');
+  document.getElementById('destSelected').innerHTML = '';
+}
+
+function initParkingMap(lat, lng){
+  if (typeof kakao === 'undefined' || !kakao.maps) {
+    throw new Error('카카오맵 SDK 로드 실패');
+  }
+  var container = document.getElementById('kakaoParkingMap');
+  var options = { center: new kakao.maps.LatLng(lat, lng), level: 4 };
+  kakaoParkingMap = new kakao.maps.Map(container, options);
+  kakaoParkingMap.addControl(new kakao.maps.ZoomControl(), kakao.maps.ControlPosition.RIGHT);
+  parkInfowindow = new kakao.maps.InfoWindow({zIndex:1});
+  var myMarkerImg = new kakao.maps.MarkerImage('https://t1.daumcdn.net/localimg/localimages/07/mapapidoc/markerStar.png', new kakao.maps.Size(24,35));
+  new kakao.maps.Marker({ map: kakaoParkingMap, position: new kakao.maps.LatLng(lat, lng), image: myMarkerImg, title: '기준 위치' });
+}
+function clearParkMarkers(){ for(var i=0;i<parkMarkers.length;i++) parkMarkers[i].setMap(null); parkMarkers=[]; }
+function addParkMarkers(list){
+  clearParkMarkers();
+  list.forEach(function(p, idx){
+    if(!p.lat||!p.lng) return;
+    var pos = new kakao.maps.LatLng(p.lat, p.lng);
+    var marker = new kakao.maps.Marker({ map: kakaoParkingMap, position: pos, title: p.name });
+    (function(item, m, i){
+      kakao.maps.event.addListener(m, 'click', function(){
+        var fee = calcParkingFee(item, parkHours);
+        var content = '<div style="padding:10px 12px;min-width:170px;font-family:Pretendard,sans-serif;">'
+          +'<div style="font-size:13px;font-weight:700;margin-bottom:4px;">'+item.name+'</div>'
+          +'<div style="font-size:11px;color:#6B7280;margin-bottom:6px;">'+(item.se||'')+'</div>'
+          +'<div style="font-size:15px;font-weight:700;color:#2563EB;">'+(fee===null?'요금정보 없음':(fee===0?'무료':fee.toLocaleString()+'원'))+'</div>'
+          +'<div style="font-size:11px;color:#9CA3AF;margin-top:3px;">직선 '+item._distKm.toFixed(2)+'km</div>'
+          +'</div>';
+        parkInfowindow.setContent(content); parkInfowindow.open(kakaoParkingMap, m);
+        var el = document.getElementById('park-card-'+i);
+        if(el) el.scrollIntoView({behavior:'smooth', block:'nearest'});
+      });
+    })(p, marker, idx);
+    parkMarkers.push(marker);
+  });
+}
+
+// ── 요금 계산 (프론트에서 즉시 계산, 서버 왕복 없음) ──────
+function calcParkingFee(p, hours){
+  if(p.feeInfo && p.feeInfo.indexOf('무료') >= 0) return 0;
+  if(!p.basicTime && !p.basicCharge && !p.addUnitTime && !p.addUnitCharge) return null; // 요금 정보 없음
+  var totalMin = hours * 60;
+  var cost;
+  if(totalMin <= p.basicTime){
+    cost = p.basicCharge;
+  } else {
+    var extra = totalMin - p.basicTime;
+    var units = p.addUnitTime > 0 ? Math.ceil(extra / p.addUnitTime) : 0;
+    cost = p.basicCharge + units * p.addUnitCharge;
+  }
+  if(p.dayMax && p.dayMax > 0 && cost > p.dayMax){
+    cost = p.dayMax;
+  }
+  return cost;
+}
+
+function startParkingSearch(){
+  var btn = document.getElementById('parkSearchBtn');
+  btn.disabled = true; btn.innerHTML = '<span>⏳</span> 검색 중...';
+  document.getElementById('parkErrorBox').classList.add('hidden');
+  document.getElementById('parkMapLoading').style.display = 'flex';
+
+  if(parkLocMode === 'dest'){
+    if(destLat === null){
+      showParkError('먼저 목적지를 검색하고 선택해주세요.');
+      return;
+    }
+    userLatPark = destLat; userLngPark = destLng;
+    document.getElementById('parkLocDot').className = 'status-dot active';
+    document.getElementById('parkLocText').textContent = '📍 ' + destLabel;
+    runParkingFlow();
+    return;
+  }
+
+  document.getElementById('parkLoadingText').textContent = '위치를 가져오는 중...';
+  if(!navigator.geolocation){ showParkError('위치 서비스 미지원'); return; }
+  navigator.geolocation.getCurrentPosition(
+    function(pos){
+      userLatPark = pos.coords.latitude; userLngPark = pos.coords.longitude;
+      document.getElementById('parkLocDot').className = 'status-dot active';
+      document.getElementById('parkLocText').textContent = '주소 변환 중...';
+      fetchAddress(userLatPark, userLngPark, 'parkLocText');
+      runParkingFlow();
+    },
+    function(){
+      userLatPark = 37.5013; userLngPark = 127.1000;
+      document.getElementById('parkLocDot').className = 'status-dot active';
+      document.getElementById('parkLocText').textContent = '시연 — 송파구';
+      runParkingFlow();
+    },
+    {timeout:8000}
+  );
+}
+
+async function runParkingFlow(){
+  try {
+    document.getElementById('parkLoadingText').textContent = '주차장 조회 중...';
+    parkRadius = parseFloat(document.getElementById('parkRadiusInput').value) || 1;
+    savePark();
+
+    var type = (parkTypePublic && parkTypePrivate) ? 'all' : (parkTypePublic ? 'public' : 'private');
+    var res = await fetch(PARKING_WORKER_URL + '/parking?lat=' + userLatPark + '&lng=' + userLngPark + '&radius=' + parkRadius + '&type=' + type);
+    var data = await res.json();
+
+    if(!data.parking || data.parking.length === 0){
+      showParkError('반경 내 주차장이 없습니다. 반경을 늘려보세요.');
+      return;
+    }
+
+    lastParkingRaw = data.parking;
+
+    if(!kakaoParkingMap) initParkingMap(userLatPark, userLngPark);
+    else kakaoParkingMap.setCenter(new kakao.maps.LatLng(userLatPark, userLngPark));
+
+    applyParkFilter();
+
+    document.getElementById('parkMapLoading').style.display = 'none';
+    document.getElementById('parkSearchBtn').disabled = false;
+    document.getElementById('parkSearchBtn').innerHTML = '<span>🔄</span> 다시 검색';
+  } catch(e) {
+    showParkError('조회 실패: ' + e.message);
+  }
+}
+
+function applyParkFilter(){
+  if(!lastParkingRaw) return;
+  var filtered = lastParkingRaw.filter(function(p){
+    var isPublic = p.se && p.se.indexOf('공영') >= 0;
+    if(isPublic && !parkTypePublic) return false;
+    if(!isPublic && !parkTypePrivate) return false;
+    return true;
+  });
+  filtered.sort(function(a,b){ return a._distKm - b._distKm; });
+
+  addParkMarkers(filtered);
+  renderParkList(filtered);
+}
+
+function renderParkList(list){
+  document.getElementById('parkListCount').textContent = list.length + '개';
+  if(list.length === 0){
+    document.getElementById('parkStationList').innerHTML = '<div class="empty-box">선택한 조건에 맞는 주차장이 없습니다.</div>';
+    return;
+  }
+  document.getElementById('parkStationList').innerHTML = list.map(function(p, idx){
+    var isPublic = p.se && p.se.indexOf('공영') >= 0;
+    var fee = calcParkingFee(p, parkHours);
+    var feeText = fee === null ? '정보없음' : (fee === 0 ? '무료' : fee.toLocaleString());
+    var feeClass = fee === 0 ? 'free' : '';
+    return '<div class="p-card" id="park-card-'+idx+'" onclick="focusParkMarker('+idx+','+p.lat+','+p.lng+')">'
+      + '<div class="p-top">'
+        + '<div style="flex:1">'
+          + '<div class="p-name">'+p.name+'<span class="p-se-badge '+(isPublic?'public':'private')+'">'+(isPublic?'공영':(p.se||'민영'))+'</span></div>'
+          + '<div class="p-addr">'+(p.addr||'주소 미제공')+'</div>'
+          + '<div class="p-dist">직선 '+p._distKm.toFixed(2)+'km · 주차면 '+(p.cap||'-')+'면</div>'
+        + '</div>'
+        + '<div class="p-fee">'
+          + '<div class="p-fee-val '+feeClass+'">'+feeText+'</div>'
+          + '<div class="p-fee-lbl">'+parkHours+'시간 예상'+(fee!==null&&fee!==0?'(원)':'')+'</div>'
+        + '</div>'
+      + '</div>'
+    + '</div>';
+  }).join('');
+}
+
+function focusParkMarker(idx, lat, lng){
+  if(!kakaoParkingMap||!lat||!lng) return;
+  kakaoParkingMap.setCenter(new kakao.maps.LatLng(lat,lng));
+  kakaoParkingMap.setLevel(3);
+  if(parkMarkers[idx]) kakao.maps.event.trigger(parkMarkers[idx],'click');
+}
+
+function showParkError(msg){
+  document.getElementById('parkMapLoading').style.display = 'none';
+  document.getElementById('parkErrorBox').textContent = '⚠️ ' + msg;
+  document.getElementById('parkErrorBox').classList.remove('hidden');
+  document.getElementById('parkSearchBtn').disabled = false;
+  document.getElementById('parkSearchBtn').innerHTML = '<span>📍</span> 다시 시도';
+}
+
 /* ══════════ 초기화 ══════════ */
 loadSettings();
 applyUI();
 loadMarginSetting();
+loadParkSettings();
 try {
   var savedTab = localStorage.getItem('gs_activeTab');
   if(savedTab === 'map') switchTab('map');
+  else if(savedTab === 'parking') switchTab('parking');
 } catch(e) {}
 </script>
 </body>
