@@ -512,13 +512,48 @@ function showError(msg) {
 
 /* ══════════ 탭 2: 최저가 지도 ══════════ */
 var RADIUS_KM = 10;
-var PRICE_MARGIN = 10;
+var PRICE_MARGIN = 20;
 var userLatMap = null, userLngMap = null;
 var kakaoMap = null;
 var markers = [];
 var infowindow = null;
 var minPriceSeoul = null, minPriceGyeonggi = null;
 var regionPricesFetched = false;
+var myRegionCode = null, myRegionName = null, myRegionMinPrice = null;
+
+var REGION_MAP = [
+  {prefix:'서울', code:'01', name:'서울'},
+  {prefix:'부산', code:'02', name:'부산'},
+  {prefix:'대구', code:'03', name:'대구'},
+  {prefix:'인천', code:'04', name:'인천'},
+  {prefix:'광주', code:'05', name:'광주'},
+  {prefix:'대전', code:'06', name:'대전'},
+  {prefix:'울산', code:'07', name:'울산'},
+  {prefix:'세종', code:'08', name:'세종'},
+  {prefix:'경기', code:'09', name:'경기도'},
+  {prefix:'강원', code:'10', name:'강원'},
+  {prefix:'충청북', code:'11', name:'충북'},
+  {prefix:'충북', code:'11', name:'충북'},
+  {prefix:'충청남', code:'12', name:'충남'},
+  {prefix:'충남', code:'12', name:'충남'},
+  {prefix:'전라북', code:'13', name:'전북'},
+  {prefix:'전북', code:'13', name:'전북'},
+  {prefix:'전라남', code:'14', name:'전남'},
+  {prefix:'전남', code:'14', name:'전남'},
+  {prefix:'경상북', code:'15', name:'경북'},
+  {prefix:'경북', code:'15', name:'경북'},
+  {prefix:'경상남', code:'16', name:'경남'},
+  {prefix:'경남', code:'16', name:'경남'},
+  {prefix:'제주', code:'17', name:'제주'}
+];
+function detectRegion(address){
+  for(var i=0;i<REGION_MAP.length;i++){
+    if(address.indexOf(REGION_MAP[i].prefix)===0 || address.indexOf(REGION_MAP[i].prefix)>=0 && address.indexOf(REGION_MAP[i].prefix)<3){
+      return REGION_MAP[i];
+    }
+  }
+  return null;
+}
 
 async function fetchRegionPrices(){
   if(regionPricesFetched) return;
@@ -534,6 +569,20 @@ async function fetchRegionPrices(){
     document.getElementById('seoulPrice').textContent = '조회 실패';
     document.getElementById('gyeonggiPrice').textContent = '조회 실패';
   }
+}
+
+async function fetchMyRegionMinPrice(address){
+  var region = detectRegion(address);
+  if(!region){ myRegionCode=null; myRegionName=null; myRegionMinPrice=null; return; }
+  myRegionCode = region.code; myRegionName = region.name;
+  // 이미 조회한 서울/경기 캐시가 있으면 재사용
+  if(region.code==='01' && minPriceSeoul){ myRegionMinPrice = minPriceSeoul; return; }
+  if(region.code==='09' && minPriceGyeonggi){ myRegionMinPrice = minPriceGyeonggi; return; }
+  try {
+    var res = await fetch(WORKER_URL+'/region-price?area='+region.code+'&prodcd=B027');
+    var d = await res.json();
+    myRegionMinPrice = d.minPrice || null;
+  } catch(e){ myRegionMinPrice = null; }
 }
 
 function initMap(lat, lng){
@@ -581,49 +630,69 @@ function startMapSearch(){
   if(!navigator.geolocation){ showMapError('위치 서비스 미지원'); return; }
   navigator.geolocation.getCurrentPosition(
     function(pos){
-      try {
-        userLatMap = pos.coords.latitude; userLngMap = pos.coords.longitude;
-        document.getElementById('mapLocDot').className = 'status-dot active';
-        document.getElementById('mapLocText').textContent = '주소 변환 중...';
-        fetchAddress(userLatMap, userLngMap, 'mapLocText');
-        if(!kakaoMap) initMap(userLatMap, userLngMap); else kakaoMap.setCenter(new kakao.maps.LatLng(userLatMap, userLngMap));
-        fetchMapStations();
-      } catch(e) { showMapError('지도 초기화 실패: ' + e.message); }
+      userLatMap = pos.coords.latitude; userLngMap = pos.coords.longitude;
+      document.getElementById('mapLocDot').className = 'status-dot active';
+      document.getElementById('mapLocText').textContent = '주소 변환 중...';
+      runMapFlow();
     },
     function(){
-      try {
-        userLatMap = 37.5013; userLngMap = 127.1000;
-        document.getElementById('mapLocDot').className = 'status-dot active';
-        document.getElementById('mapLocText').textContent = '시연 — 송파구';
-        if(!kakaoMap) initMap(userLatMap, userLngMap); else kakaoMap.setCenter(new kakao.maps.LatLng(userLatMap, userLngMap));
-        fetchMapStations();
-      } catch(e) { showMapError('지도 초기화 실패: ' + e.message); }
+      userLatMap = 37.5013; userLngMap = 127.1000;
+      document.getElementById('mapLocDot').className = 'status-dot active';
+      document.getElementById('mapLocText').textContent = '시연 — 송파구';
+      runMapFlow();
     },
     {timeout:8000}
   );
 }
+async function runMapFlow(){
+  try {
+    // 1. 주소 조회
+    var addr = '서울특별시 송파구';
+    try {
+      var res = await fetch(WORKER_URL + '/geocode?lat=' + userLatMap + '&lng=' + userLngMap);
+      var d = await res.json();
+      if(d.address){ addr = d.address; document.getElementById('mapLocText').textContent = '📍 ' + addr; }
+      else document.getElementById('mapLocText').textContent = '📍 ' + userLatMap.toFixed(4) + ', ' + userLngMap.toFixed(4);
+    } catch(e) {
+      document.getElementById('mapLocText').textContent = '📍 ' + userLatMap.toFixed(4) + ', ' + userLngMap.toFixed(4);
+    }
+
+    // 2. 내 지역 최저가 조회
+    document.getElementById('mapLoadingText').textContent = '지역 최저가 조회 중...';
+    await fetchMyRegionMinPrice(addr);
+
+    // 3. 지도 초기화
+    if(!kakaoMap) initMap(userLatMap, userLngMap); else kakaoMap.setCenter(new kakao.maps.LatLng(userLatMap, userLngMap));
+
+    // 4. 주유소 검색
+    await fetchMapStations();
+  } catch(e) { showMapError('처리 실패: ' + e.message); }
+}
 async function fetchMapStations(){
   document.getElementById('mapLoadingText').textContent = '주유소 가격 조회 중...';
-  try {
-    var res = await fetch(WORKER_URL+'/stations?lat='+userLatMap+'&lng='+userLngMap+'&radius='+RADIUS_KM+'&prodcd=B027');
-    var data = await res.json();
-    if(!data.stations||data.stations.length===0){ showMapError('반경 내 주유소가 없습니다.'); return; }
-    var stations = data.stations.map(function(s){ return Object.assign({},s,{distKm: haversineKm(userLatMap,userLngMap,s.lat||userLatMap,s.lng||userLngMap)}); });
-    var localMin = Math.min.apply(null, stations.map(function(s){return s.price;}));
-    var basePrice = minPriceSeoul ? Math.min(minPriceSeoul, minPriceGyeonggi||minPriceSeoul) : localMin;
-    var threshold = basePrice + PRICE_MARGIN;
-    var filtered = stations.filter(function(s){ return s.price <= threshold; });
-    if(filtered.length===0){ threshold = localMin + 50; filtered = stations.filter(function(s){ return s.price <= threshold; }); }
-    filtered.sort(function(a,b){ return a.distKm - b.distKm; });
-    var filterEl = document.getElementById('filterInfo');
-    filterEl.style.display = 'block';
-    document.getElementById('filterText').textContent = '기준 최저가 '+basePrice.toLocaleString()+'원/L 기준 +'+PRICE_MARGIN+'원('+threshold.toLocaleString()+'원/L) 이내 주유소 '+filtered.length+'곳';
-    addMarkers(filtered);
-    renderMapList(filtered, localMin);
-    document.getElementById('mapLoading').style.display = 'none';
-    document.getElementById('mapRefreshBtn').disabled = false;
-    document.getElementById('mapRefreshBtn').textContent = '📍 위치 새로고침';
-  } catch(e){ showMapError('조회 실패: '+e.message); }
+  var res = await fetch(WORKER_URL+'/stations?lat='+userLatMap+'&lng='+userLngMap+'&radius='+RADIUS_KM+'&prodcd=B027');
+  var data = await res.json();
+  if(!data.stations||data.stations.length===0){ showMapError('반경 내 주유소가 없습니다.'); return; }
+  var stations = data.stations.map(function(s){ return Object.assign({},s,{distKm: haversineKm(userLatMap,userLngMap,s.lat||userLatMap,s.lng||userLngMap)}); });
+  var localMin = Math.min.apply(null, stations.map(function(s){return s.price;}));
+
+  // 내 지역 최저가 기준 (조회 실패 시 로컬 최저가로 대체)
+  var basePrice = myRegionMinPrice || localMin;
+  var baseLabel = myRegionName ? myRegionName+' 최저가' : '검색결과 내 최저가';
+  var threshold = basePrice + PRICE_MARGIN;
+
+  var filtered = stations.filter(function(s){ return s.price <= threshold; });
+  filtered.sort(function(a,b){ return a.distKm - b.distKm; });
+
+  var filterEl = document.getElementById('filterInfo');
+  filterEl.style.display = 'block';
+  document.getElementById('filterText').textContent = baseLabel+' '+basePrice.toLocaleString()+'원/L 기준 +'+PRICE_MARGIN+'원('+threshold.toLocaleString()+'원/L 이하) 주유소 '+filtered.length+'곳';
+
+  addMarkers(filtered);
+  renderMapList(filtered, basePrice);
+  document.getElementById('mapLoading').style.display = 'none';
+  document.getElementById('mapRefreshBtn').disabled = false;
+  document.getElementById('mapRefreshBtn').textContent = '📍 위치 새로고침';
 }
 function renderMapList(stations, minPrice){
   document.getElementById('mapListCount').textContent = stations.length+'개';
