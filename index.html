@@ -330,6 +330,7 @@ function switchTab(name){
   document.getElementById('panel-map').classList.toggle('active', name==='map');
   document.getElementById('tabBtn-calc').classList.toggle('active', name==='calc');
   document.getElementById('tabBtn-map').classList.toggle('active', name==='map');
+  try { localStorage.setItem('gs_activeTab', name); } catch(e) {}
   if(name==='map' && !kakaoMap){
     setTimeout(function(){
       if(userLatMap===null){ /* 아직 지도 검색 안했으면 대기 */ }
@@ -680,12 +681,24 @@ async function runMapFlow(){
     await fetchMapStations();
   } catch(e) { showMapError('처리 실패: ' + e.message); }
 }
+var lastStationsRaw = null; // 마진 재조정용 원본 캐시
+
 async function fetchMapStations(){
   document.getElementById('mapLoadingText').textContent = '주유소 가격 조회 중...';
   var res = await fetch(WORKER_URL+'/stations?lat='+userLatMap+'&lng='+userLngMap+'&radius='+RADIUS_KM+'&prodcd=B027');
   var data = await res.json();
   if(!data.stations||data.stations.length===0){ showMapError('반경 내 주유소가 없습니다.'); return; }
   var stations = data.stations.map(function(s){ return Object.assign({},s,{distKm: haversineKm(userLatMap,userLngMap,s.lat||userLatMap,s.lng||userLngMap)}); });
+  lastStationsRaw = stations;
+  applyMarginFilter();
+  document.getElementById('mapLoading').style.display = 'none';
+  document.getElementById('mapRefreshBtn').disabled = false;
+  document.getElementById('mapRefreshBtn').textContent = '📍 위치 새로고침';
+}
+
+function applyMarginFilter(){
+  if(!lastStationsRaw) return;
+  var stations = lastStationsRaw;
   var localMin = Math.min.apply(null, stations.map(function(s){return s.price;}));
 
   var basePrice = myRegionMinPrice || localMin;
@@ -701,9 +714,6 @@ async function fetchMapStations(){
 
   addMarkers(filtered);
   renderMapList(filtered, basePrice);
-  document.getElementById('mapLoading').style.display = 'none';
-  document.getElementById('mapRefreshBtn').disabled = false;
-  document.getElementById('mapRefreshBtn').textContent = '📍 위치 새로고침';
 }
 function renderMapList(stations, minPrice){
   document.getElementById('mapListCount').textContent = stations.length+'개';
@@ -746,6 +756,7 @@ function onMarginChange(val){
   PRICE_MARGIN = parseInt(val);
   document.getElementById('marginVal').textContent = PRICE_MARGIN;
   try { localStorage.setItem('gs_margin', String(PRICE_MARGIN)); } catch(e) {}
+  if(lastStationsRaw) applyMarginFilter();
 }
 function loadMarginSetting(){
   try {
@@ -762,6 +773,10 @@ function loadMarginSetting(){
 loadSettings();
 applyUI();
 loadMarginSetting();
+try {
+  var savedTab = localStorage.getItem('gs_activeTab');
+  if(savedTab === 'map') switchTab('map');
+} catch(e) {}
 </script>
 </body>
 </html>
