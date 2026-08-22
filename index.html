@@ -395,9 +395,10 @@
 
       <div class="input-group">
         <label class="input-label">검색 반경</label>
-        <div class="input-row">
-          <input type="number" id="parkRadiusInput" value="1" min="0.5" max="5" step="0.5">
-          <span class="input-unit">km</span>
+        <div class="loc-mode-group">
+          <button class="loc-mode-btn" id="radius-100" onclick="onRadiusChange(0.1)">100m</button>
+          <button class="loc-mode-btn active" id="radius-200" onclick="onRadiusChange(0.2)">200m</button>
+          <button class="loc-mode-btn" id="radius-300" onclick="onRadiusChange(0.3)">300m</button>
         </div>
       </div>
 
@@ -903,7 +904,7 @@ var PARKING_WORKER_URL = 'https://parking-proxy.kim80091.workers.dev';
 var parkTypePublic = true, parkTypePrivate = true;
 var parkLocMode = 'current'; // current | dest
 var parkHours = 2;
-var parkRadius = 1;
+var parkRadius = 0.2;
 var destLat = null, destLng = null, destLabel = null;
 var userLatPark = null, userLngPark = null;
 var kakaoParkingMap = null;
@@ -940,7 +941,19 @@ function loadParkSettings(){
   document.getElementById('destSearchBox').classList.toggle('hidden', parkLocMode!=='dest');
   document.getElementById('hourRange').value = parkHours;
   document.getElementById('hourVal').textContent = parkHours;
-  document.getElementById('parkRadiusInput').value = parkRadius;
+  applyRadiusButtonUI();
+}
+
+function applyRadiusButtonUI(){
+  document.getElementById('radius-100').classList.toggle('active', parkRadius === 0.1);
+  document.getElementById('radius-200').classList.toggle('active', parkRadius === 0.2);
+  document.getElementById('radius-300').classList.toggle('active', parkRadius === 0.3);
+}
+
+function onRadiusChange(km){
+  parkRadius = km;
+  applyRadiusButtonUI();
+  savePark();
 }
 
 function onToggleParkType(type){
@@ -1102,7 +1115,7 @@ function startParkingSearch(){
 async function runParkingFlow(){
   try {
     document.getElementById('parkLoadingText').textContent = '주차장 조회 중...';
-    parkRadius = parseFloat(document.getElementById('parkRadiusInput').value) || 1;
+    // parkRadius는 버튼 클릭 시 이미 전역변수로 설정되어 있음
     savePark();
 
     var type = (parkTypePublic && parkTypePrivate) ? 'all' : (parkTypePublic ? 'public' : 'private');
