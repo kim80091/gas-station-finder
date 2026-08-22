@@ -1013,6 +1013,7 @@ function selectDestination(idx){
   var sel = document.getElementById('destSelected');
   sel.classList.remove('hidden');
   sel.innerHTML = '<span>📍 '+destLabel+'</span><span class="clear-dest" onclick="clearDestination()">✕</span>';
+  startParkingSearch(); // 목적지 선택 즉시 자동 검색
 }
 function clearDestination(){
   destLat = null; destLng = null; destLabel = null;
