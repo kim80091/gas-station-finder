@@ -525,7 +525,7 @@ async function fetchRegionPrices(){
   regionPricesFetched = true;
   try {
     var r1 = await fetch(WORKER_URL+'/region-price?area=01&prodcd=B027');
-    var r2 = await fetch(WORKER_URL+'/region-price?area=13&prodcd=B027');
+    var r2 = await fetch(WORKER_URL+'/region-price?area=09&prodcd=B027');
     var d1 = await r1.json();
     var d2 = await r2.json();
     if(d1.minPrice){ minPriceSeoul = d1.minPrice; document.getElementById('seoulPrice').textContent = d1.minPrice.toLocaleString()+'원/L'; document.getElementById('seoulSub').textContent = d1.stationName||''; }
@@ -537,6 +537,9 @@ async function fetchRegionPrices(){
 }
 
 function initMap(lat, lng){
+  if (typeof kakao === 'undefined' || !kakao.maps) {
+    throw new Error('카카오맵 SDK 로드 실패 (도메인 등록 또는 JS 키를 확인하세요)');
+  }
   var container = document.getElementById('kakaoMap');
   var options = { center: new kakao.maps.LatLng(lat, lng), level: 5 };
   kakaoMap = new kakao.maps.Map(container, options);
@@ -578,19 +581,23 @@ function startMapSearch(){
   if(!navigator.geolocation){ showMapError('위치 서비스 미지원'); return; }
   navigator.geolocation.getCurrentPosition(
     function(pos){
-      userLatMap = pos.coords.latitude; userLngMap = pos.coords.longitude;
-      document.getElementById('mapLocDot').className = 'status-dot active';
-      document.getElementById('mapLocText').textContent = '주소 변환 중...';
-      fetchAddress(userLatMap, userLngMap, 'mapLocText');
-      if(!kakaoMap) initMap(userLatMap, userLngMap); else kakaoMap.setCenter(new kakao.maps.LatLng(userLatMap, userLngMap));
-      fetchMapStations();
+      try {
+        userLatMap = pos.coords.latitude; userLngMap = pos.coords.longitude;
+        document.getElementById('mapLocDot').className = 'status-dot active';
+        document.getElementById('mapLocText').textContent = '주소 변환 중...';
+        fetchAddress(userLatMap, userLngMap, 'mapLocText');
+        if(!kakaoMap) initMap(userLatMap, userLngMap); else kakaoMap.setCenter(new kakao.maps.LatLng(userLatMap, userLngMap));
+        fetchMapStations();
+      } catch(e) { showMapError('지도 초기화 실패: ' + e.message); }
     },
     function(){
-      userLatMap = 37.5013; userLngMap = 127.1000;
-      document.getElementById('mapLocDot').className = 'status-dot active';
-      document.getElementById('mapLocText').textContent = '시연 — 송파구';
-      if(!kakaoMap) initMap(userLatMap, userLngMap); else kakaoMap.setCenter(new kakao.maps.LatLng(userLatMap, userLngMap));
-      fetchMapStations();
+      try {
+        userLatMap = 37.5013; userLngMap = 127.1000;
+        document.getElementById('mapLocDot').className = 'status-dot active';
+        document.getElementById('mapLocText').textContent = '시연 — 송파구';
+        if(!kakaoMap) initMap(userLatMap, userLngMap); else kakaoMap.setCenter(new kakao.maps.LatLng(userLatMap, userLngMap));
+        fetchMapStations();
+      } catch(e) { showMapError('지도 초기화 실패: ' + e.message); }
     },
     {timeout:8000}
   );
