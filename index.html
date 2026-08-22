@@ -399,6 +399,7 @@
           <button class="loc-mode-btn" id="radius-100" onclick="onRadiusChange(0.1)">100m</button>
           <button class="loc-mode-btn active" id="radius-200" onclick="onRadiusChange(0.2)">200m</button>
           <button class="loc-mode-btn" id="radius-300" onclick="onRadiusChange(0.3)">300m</button>
+          <button class="loc-mode-btn" id="radius-500" onclick="onRadiusChange(0.5)">500m</button>
         </div>
       </div>
 
@@ -948,6 +949,7 @@ function applyRadiusButtonUI(){
   document.getElementById('radius-100').classList.toggle('active', parkRadius === 0.1);
   document.getElementById('radius-200').classList.toggle('active', parkRadius === 0.2);
   document.getElementById('radius-300').classList.toggle('active', parkRadius === 0.3);
+  document.getElementById('radius-500').classList.toggle('active', parkRadius === 0.5);
 }
 
 function onRadiusChange(km){
